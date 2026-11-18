@@ -1,0 +1,226 @@
+{
+  "The Bungle Bungles": {
+    "site": "a",
+    "region": "Western Australia",
+    "collection_id": 1,
+    "collection_type": "Leaves",
+    "animal": null,
+    "activity": "Indigenous Culture"
+  },
+  "The Pinnacles": {
+    "site": "b",
+    "region": "Western Australia",
+    "collection_id": 1,
+    "collection_type": null,
+    "animal": "Kangaroos",
+    "activity": "Sightseeing"
+  },
+  "Margaret River": {
+    "site": "c",
+    "region": "Western Australia",
+    "collection_id": 1,
+    "collection_type": "Shells",
+    "animal": "Kangaroos",
+    "activity": null
+  },
+  "Kalbarri National Park": {
+    "site": "d",
+    "region": "Western Australia",
+    "collection_id": 1,
+    "collection_type": "Wildflowers",
+    "animal": null,
+    "activity": "Bushwalking"
+  },
+  "Uluru": {
+    "site": "e",
+    "region": "Northern Territory",
+    "collection_id": 4,
+    "collection_type": null,
+    "animal": "Emus",
+    "activity": "Indigenous Culture"
+  },
+  "Kakadu National Park": {
+    "site": "f",
+    "region": "Northern Territory",
+    "collection_id": 4,
+    "collection_type": null,
+    "animal": "Wombats",
+    "activity": "Sightseeing"
+  },
+  "Nitmiluk National Park": {
+    "site": "g",
+    "region": "Northern Territory",
+    "collection_id": 4,
+    "collection_type": "Shells",
+    "animal": "Platypuses",
+    "activity": null
+  },
+  "King's Canyon": {
+    "site": "h",
+    "region": "Northern Territory",
+    "collection_id": 4,
+    "collection_type": null,
+    "animal": "Koalas",
+    "activity": "Swimming"
+  },
+  "The Great Barrier Reef": {
+    "site": "i",
+    "region": "Queensland",
+    "collection_id": 6,
+    "collection_type": "Wildflowers",
+    "animal": null,
+    "activity": "Sightseeing"
+  },
+  "The Whitsundays": {
+    "site": "j",
+    "region": "Queensland",
+    "collection_id": 6,
+    "collection_type": null,
+    "animal": "Kangaroos",
+    "activity": "Indigenous Culture"
+  },
+  "Daintree Rainforest": {
+    "site": "k",
+    "region": "Queensland",
+    "collection_id": 6,
+    "collection_type": "Souvenirs",
+    "animal": null,
+    "activity": "Bushwalking"
+  },
+  "Surfers Paradise": {
+    "site": "l",
+    "region": "Queensland",
+    "collection_id": 6,
+    "collection_type": "Wildflowers",
+    "animal": null,
+    "activity": "Swimming"
+  },
+  "Barossa Valley": {
+    "site": "m",
+    "region": "South Australia",
+    "collection_id": 3,
+    "collection_type": null,
+    "animal": "Koalas",
+    "activity": "Bushwalking"
+  },
+  "Lake Eyre": {
+    "site": "n",
+    "region": "South Australia",
+    "collection_id": 3,
+    "collection_type": null,
+    "animal": "Emus",
+    "activity": "Swimming"
+  },
+  "Kangaroo Island": {
+    "site": "o",
+    "region": "South Australia",
+    "collection_id": 3,
+    "collection_type": null,
+    "animal": "Kangaroos",
+    "activity": "Bushwalking"
+  },
+  "Mount Gambier": {
+    "site": "p",
+    "region": "South Australia",
+    "collection_id": 3,
+    "collection_type": "Wildflowers",
+    "animal": null,
+    "activity": "Sightseeing"
+  },
+  "Blue Mountains": {
+    "site": "q",
+    "region": "New South Wales",
+    "collection_id": 5,
+    "collection_type": null,
+    "animal": "Wombats",
+    "activity": "Indigenous Culture"
+  },
+  "Sydney Harbour": {
+    "site": "r",
+    "region": "New South Wales",
+    "collection_id": 5,
+    "collection_type": null,
+    "animal": "Emus",
+    "activity": "Sightseeing"
+  },
+  "Bondi Beach": {
+    "site": "s",
+    "region": "New South Wales",
+    "collection_id": 5,
+    "collection_type": null,
+    "animal": "Wombats",
+    "activity": "Swimming"
+  },
+  "Hunter Valley": {
+    "site": "t",
+    "region": "New South Wales",
+    "collection_id": 5,
+    "collection_type": null,
+    "animal": "Emus",
+    "activity": "Bushwalking"
+  },
+  "Melbourne": {
+    "site": "u",
+    "region": "Victoria",
+    "collection_id": 2,
+    "collection_type": null,
+    "animal": "Wombats",
+    "activity": "Bushwalking"
+  },
+  "The MCG": {
+    "site": "v",
+    "region": "Victoria",
+    "collection_id": 2,
+    "collection_type": "Leaves",
+    "animal": null,
+    "activity": "Indigenous Culture"
+  },
+  "Twelve Apostles": {
+    "site": "w",
+    "region": "Victoria",
+    "collection_id": 2,
+    "collection_type": "Shells",
+    "animal": null,
+    "activity": "Swimming"
+  },
+  "Royal Exhibition Building": {
+    "site": "x",
+    "region": "Victoria",
+    "collection_id": 2,
+    "collection_type": "Leaves",
+    "animal": "Platypuses",
+    "activity": null
+  },
+  "Salamanca Markets": {
+    "site": "y",
+    "region": "Tasmania",
+    "collection_id": 7,
+    "collection_type": "Leaves",
+    "animal": "Emus",
+    "activity": null
+  },
+  "Mount Wellington": {
+    "site": "z",
+    "region": "Tasmania",
+    "collection_id": 7,
+    "collection_type": null,
+    "animal": "Koalas",
+    "activity": "Sightseeing"
+  },
+  "Port Arthur": {
+    "site": "*",
+    "region": "Tasmania",
+    "collection_id": 7,
+    "collection_type": "Leaves",
+    "animal": null,
+    "activity": "Indigenous Culture"
+  },
+  "Richmond": {
+    "site": "-",
+    "region": "Tasmania",
+    "collection_id": 7,
+    "collection_type": null,
+    "animal": "Kangaroos",
+    "activity": "Swimming"
+  }
+}
