@@ -42,22 +42,7 @@ test("sitesFor returns the unique site letters collected", () => {
   assert.deepEqual([...tracker.sitesFor(0)].sort(), ["A", "B"]);
 });
 
-test("completedRegions lists regions where the player has all 4 sites", () => {
-  const tracker = new RegionTracker();
-
-  tracker.recordSites(0, [
-    card("A", "WA"),
-    card("B", "WA"),
-    card("C", "WA"),
-    card("D", "WA"),
-    card("W", "TAS"),
-    card("X", "TAS"),
-  ]);
-
-  assert.deepEqual(tracker.completedRegions(0, ["WA", "TAS"]), ["WA"]);
-});
-
-test("two players can both complete and score the same region", () => {
+test("two players completing the same region in one round both score +3", () => {
   const tracker = new RegionTracker();
   const waSites = [
     card("A", "WA"),
@@ -68,11 +53,31 @@ test("two players can both complete and score the same region", () => {
   tracker.recordSites(0, waSites);
   tracker.recordSites(1, waSites);
 
-  const regions = ["WA"];
-  assert.deepEqual(tracker.completedRegions(0, regions), ["WA"]);
-  assert.deepEqual(tracker.completedRegions(1, regions), ["WA"]);
+  const bonuses = tracker.awardRoundBonuses(["WA"], [0, 1]);
 
-  // Both players earn the +3 region bonus.
-  assert.equal(tracker.completedRegions(0, regions).length * 3, 3);
-  assert.equal(tracker.completedRegions(1, regions).length * 3, 3);
+  assert.deepEqual(bonuses, [
+    { playerId: 0, region: "WA" },
+    { playerId: 1, region: "WA" },
+  ]);
+  assert.equal(tracker.claimed.has("WA"), true);
+});
+
+test("a region claimed in an earlier round is locked for later rounds", () => {
+  const tracker = new RegionTracker();
+  const waSites = [
+    card("A", "WA"),
+    card("B", "WA"),
+    card("C", "WA"),
+    card("D", "WA"),
+  ];
+
+  // Round 1: only player 0 completes WA, so it is claimed.
+  tracker.recordSites(0, waSites);
+  assert.deepEqual(tracker.awardRoundBonuses(["WA"], [0, 1]), [
+    { playerId: 0, region: "WA" },
+  ]);
+
+  // Round 2: player 1 now also completes WA, but it is already claimed.
+  tracker.recordSites(1, waSites);
+  assert.deepEqual(tracker.awardRoundBonuses(["WA"], [0, 1]), []);
 });
