@@ -1,17 +1,12 @@
 import type { Card } from "./Card.js";
 
-export interface RegionBonus {
-  readonly playerId: number;
-  readonly region: string;
-}
-
 /**
- * Tracks collected site letters per player and which regions have already
- * been claimed, so the +3 first-completer bonus is awarded exactly once.
+ * Tracks collected site letters per player across the game.
+ * Sites and regions are scored once at game end and are NOT exclusive:
+ * every player who completes a region scores its +3 bonus.
  */
 export class RegionTracker {
   private readonly sitesByPlayer = new Map<number, Map<string, string>>();
-  private readonly claimedRegions = new Set<string>();
 
   /** Records new site letters for a player (duplicate letters ignored). */
   recordSites(playerId: number, cards: readonly Card[]): void {
@@ -25,6 +20,11 @@ export class RegionTracker {
         sites.set(card.siteLetter, card.region);
       }
     }
+  }
+
+  /** Unique site letters collected by a player so far. */
+  sitesFor(playerId: number): ReadonlySet<string> {
+    return new Set(this.sitesByPlayer.get(playerId)?.keys() ?? []);
   }
 
   isRegionComplete(playerId: number, region: string): boolean {
@@ -41,31 +41,8 @@ export class RegionTracker {
     return count === 4;
   }
 
-  /**
-   * Awards the +3 bonus to the first player (in playerOrder) to complete
-   * each region, exactly once per region. Returns the awarded bonuses.
-   */
-  awardFirstCompletions(
-    regions: readonly string[],
-    playerOrder: readonly number[],
-  ): RegionBonus[] {
-    const bonuses: RegionBonus[] = [];
-    for (const region of regions) {
-      if (this.claimedRegions.has(region)) {
-        continue;
-      }
-      for (const playerId of playerOrder) {
-        if (this.isRegionComplete(playerId, region)) {
-          this.claimedRegions.add(region);
-          bonuses.push({ playerId, region });
-          break;
-        }
-      }
-    }
-    return bonuses;
-  }
-
-  get claimed(): ReadonlySet<string> {
-    return this.claimedRegions;
+  /** Regions from the list where the player has collected all 4 sites. */
+  completedRegions(playerId: number, regions: readonly string[]): string[] {
+    return regions.filter((region) => this.isRegionComplete(playerId, region));
   }
 }

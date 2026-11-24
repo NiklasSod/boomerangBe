@@ -34,43 +34,45 @@ test("recordSites ignores duplicate letters", () => {
   assert.equal(tracker.isRegionComplete(0, "WA"), true);
 });
 
-test("awards the first completer in player order, once per region", () => {
+test("sitesFor returns the unique site letters collected", () => {
   const tracker = new RegionTracker();
-  const waSites = [card("A", "WA"), card("B", "WA"), card("C", "WA"), card("D", "WA")];
-  tracker.recordSites(0, waSites);
-  tracker.recordSites(1, waSites);
 
-  const bonuses = tracker.awardFirstCompletions(["WA"], [0, 1]);
-  assert.deepEqual(bonuses, [{ playerId: 0, region: "WA" }]);
+  tracker.recordSites(0, [card("A", "WA"), card("B", "WA"), card("A", "WA")]);
 
-  const again = tracker.awardFirstCompletions(["WA"], [0, 1]);
-  assert.deepEqual(again, []);
+  assert.deepEqual([...tracker.sitesFor(0)].sort(), ["A", "B"]);
 });
 
-test("gives the bonus to the first player in order who is complete", () => {
+test("completedRegions lists regions where the player has all 4 sites", () => {
   const tracker = new RegionTracker();
-  tracker.recordSites(0, [card("A", "WA"), card("B", "WA")]); // incomplete
-  tracker.recordSites(1, [
-    card("A", "WA"),
-    card("B", "WA"),
-    card("C", "WA"),
-    card("D", "WA"),
-  ]);
 
-  const bonuses = tracker.awardFirstCompletions(["WA"], [0, 1]);
-  assert.deepEqual(bonuses, [{ playerId: 1, region: "WA" }]);
-});
-
-test("tracks claimed regions", () => {
-  const tracker = new RegionTracker();
   tracker.recordSites(0, [
     card("A", "WA"),
     card("B", "WA"),
     card("C", "WA"),
     card("D", "WA"),
+    card("W", "TAS"),
+    card("X", "TAS"),
   ]);
 
-  tracker.awardFirstCompletions(["WA"], [0]);
+  assert.deepEqual(tracker.completedRegions(0, ["WA", "TAS"]), ["WA"]);
+});
 
-  assert.equal(tracker.claimed.has("WA"), true);
+test("two players can both complete and score the same region", () => {
+  const tracker = new RegionTracker();
+  const waSites = [
+    card("A", "WA"),
+    card("B", "WA"),
+    card("C", "WA"),
+    card("D", "WA"),
+  ];
+  tracker.recordSites(0, waSites);
+  tracker.recordSites(1, waSites);
+
+  const regions = ["WA"];
+  assert.deepEqual(tracker.completedRegions(0, regions), ["WA"]);
+  assert.deepEqual(tracker.completedRegions(1, regions), ["WA"]);
+
+  // Both players earn the +3 region bonus.
+  assert.equal(tracker.completedRegions(0, regions).length * 3, 3);
+  assert.equal(tracker.completedRegions(1, regions).length * 3, 3);
 });
