@@ -74,7 +74,11 @@ tests/          mirrors src/, uses node:test + node:assert/strict
 **Deal & draft (each of 4 rounds):** shuffle, deal 7 cards each (unused cards stay in deck), then:
 - **6 picks pass clockwise** (next player), each player keeping 1 card per pick.
 - The **7th card (catch card)** is the final card received and is added to the draft.
-- Direction should be a **parameter** (`"clockwise" | "anticlockwise"`) so flipping the whole game is a one-line change.
+
+**Draft direction (step 16 — expose as constructor booleans on `DraftCoordinator`):**
+- `clockwise` — base pass direction: `true` = left/clockwise, `false` = right/anticlockwise.
+- `alternateEachRound` — when true, flip the base direction each round (left on odd rounds, right on even rounds).
+- `catchOppositeDirection` — when true, the catch card travels opposite to that round's pass direction (HomeExam2025 rule); when false, it travels the same direction (boardgame.bg official rule).
 
 **Scoring timing:**
 
