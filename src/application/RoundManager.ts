@@ -2,6 +2,7 @@ import type { Player } from "../domain/Player.js";
 import type { IAgent } from "../domain/ports.js";
 import type { RegionTracker } from "../domain/RegionTracker.js";
 import type { ScoreCalculator } from "../domain/ScoreCalculator.js";
+import type { CategoryResult } from "../domain/Scoring.js";
 import type { DraftCoordinator } from "./DraftCoordinator.js";
 
 /** Chooses which activity a player scores this round (or none). */
@@ -10,6 +11,12 @@ export interface ActivityChooser {
     player: Player,
     alreadyScored: ReadonlySet<string>,
   ): Promise<string | undefined>;
+}
+
+export interface PlayerRoundReport {
+  readonly playerId: number;
+  readonly total: number;
+  readonly results: readonly CategoryResult[];
 }
 
 /**
@@ -32,7 +39,7 @@ export class RoundManager {
     players: readonly Player[],
     agents: readonly IAgent[],
     roundNumber: number,
-  ): Promise<void> {
+  ): Promise<readonly PlayerRoundReport[]> {
     await this.draftCoordinator.runRound(players, agents, roundNumber);
 
     for (const player of players) {
@@ -48,7 +55,7 @@ export class RoundManager {
       playerById.get(bonus.playerId)?.awardRegionBonus(bonus.region);
     }
 
-    await Promise.all(
+    return Promise.all(
       players.map(async (player) => {
         const alreadyScored =
           this.activitiesAlreadyScored.get(player.id) ?? new Set<string>();
@@ -66,6 +73,11 @@ export class RoundManager {
           alreadyScored.add(chosenActivity);
         }
         this.activitiesAlreadyScored.set(player.id, alreadyScored);
+        return {
+          playerId: player.id,
+          total: report.total,
+          results: report.results,
+        };
       }),
     );
   }

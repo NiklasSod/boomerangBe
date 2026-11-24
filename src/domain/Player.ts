@@ -10,15 +10,21 @@ export class Player {
   readonly draft: Card[] = [];
   readonly regionBonuses: string[] = [];
   readonly roundScores: number[] = [];
+  private finalPoints = 0;
 
   constructor(id: number) {
     this.id = id;
   }
 
-  /** Sum of scored rounds plus +3 per completed-region bonus. */
+  /** Sum of round scores, region bonuses, and end-of-game categories. */
   get totalScore(): number {
     const rounds = this.roundScores.reduce((sum, score) => sum + score, 0);
-    return rounds + this.regionBonuses.length * 3;
+    return rounds + this.regionBonuses.length * 3 + this.finalPoints;
+  }
+
+  /** End-of-game category points (e.g. Sites). */
+  get finalScore(): number {
+    return this.finalPoints;
   }
 
   receive(cards: readonly Card[]): void {
@@ -51,6 +57,10 @@ export class Player {
 
   recordRoundScore(points: number): void {
     this.roundScores.push(points);
+  }
+
+  recordFinalScore(points: number): void {
+    this.finalPoints += points;
   }
 
   /** Clears hand and draft for a new round. */

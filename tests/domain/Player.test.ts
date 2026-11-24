@@ -76,6 +76,15 @@ test("totalScore sums round scores plus 3 per region bonus", () => {
   assert.equal(player.totalScore, 18);
 });
 
+test("totalScore includes end-of-game final points", () => {
+  const player = new Player(0);
+  player.recordRoundScore(10);
+  player.recordFinalScore(7);
+
+  assert.equal(player.finalScore, 7);
+  assert.equal(player.totalScore, 17);
+});
+
 test("resetForRound clears hand and draft", () => {
   const player = new Player(0);
   const a = card("A");
