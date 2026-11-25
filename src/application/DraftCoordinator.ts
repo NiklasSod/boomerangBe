@@ -46,7 +46,7 @@ export class DraftCoordinator {
 
     // Each player picks a hidden Throw card from their own 7-card hand.
     const throwChoices = await Promise.all(
-      players.map((player, i) => agents[i].chooseCard(player.hand)),
+      players.map((player, i) => agents[i].chooseCard(player.hand, "throw")),
     );
     for (let i = 0; i < players.length; i++) {
       players[i].moveToDraft(throwChoices[i]);
@@ -56,7 +56,7 @@ export class DraftCoordinator {
     for (let pick = 0; pick < PICKS_WITH_CHOICE; pick++) {
       this.passHands(players, passDirection);
       const choices = await Promise.all(
-        players.map((player, i) => agents[i].chooseCard(player.hand)),
+        players.map((player, i) => agents[i].chooseCard(player.hand, "draft")),
       );
       for (let i = 0; i < players.length; i++) {
         players[i].moveToDraft(choices[i]);

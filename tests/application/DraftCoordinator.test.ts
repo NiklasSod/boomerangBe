@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { DraftCoordinator } from "../../src/application/DraftCoordinator.js";
 import { Card } from "../../src/domain/Card.js";
 import { Player } from "../../src/domain/Player.js";
-import type { IAgent } from "../../src/domain/ports.js";
+import type { CardPickPurpose, IAgent } from "../../src/domain/ports.js";
 
 const THREE_HANDS = [
   ["A", "B", "C", "D", "E", "F", "G"],
@@ -147,4 +147,38 @@ test("throws when a player does not start with a 7-card hand", async () => {
     coordinator.runRound(players, [firstCardAgent, firstCardAgent], 1),
     /7-card hand and an empty draft/,
   );
+});
+
+test("labels the first pick as the throw card", async () => {
+  const purposes: CardPickPurpose[] = [];
+  const recordingAgent: IAgent = {
+    async chooseCard(hand: Card[], purpose?: CardPickPurpose) {
+      if (purpose !== undefined) {
+        purposes.push(purpose);
+      }
+      return hand[0];
+    },
+  };
+  const players = makePlayers([
+    ["A", "B", "C", "D", "E", "F", "G"],
+    ["H", "I", "J", "K", "L", "M", "N"],
+  ]);
+  const coordinator = new DraftCoordinator();
+
+  await coordinator.runRound(players, [recordingAgent, recordingAgent], 1);
+
+  assert.deepEqual(purposes, [
+    "throw",
+    "throw",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+    "draft",
+  ]);
 });

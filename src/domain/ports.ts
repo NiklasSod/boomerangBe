@@ -10,9 +10,11 @@ export interface IRandom {
   nextInt(upperExclusive: number): number;
 }
 
+export type CardPickPurpose = "throw" | "draft";
+
 /** Strategy for choosing a card from a hand (human, random bot, future AI). */
 export interface IAgent {
-  chooseCard(hand: Card[]): Promise<Card>;
+  chooseCard(hand: Card[], purpose?: CardPickPurpose): Promise<Card>;
 }
 
 /** Narrow I/O contract between a player and the outside world (console, socket). */

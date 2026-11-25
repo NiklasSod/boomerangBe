@@ -80,3 +80,58 @@ test("already-scored activities are not offered", async () => {
     undefined,
   );
 });
+
+test("announces the catch card before activities for humans", async () => {
+  const player = new Player(0);
+  player.draft.push(
+    card("Swimming"),
+    card("Bushwalking"),
+    Card.fromRaw("Catch Site", {
+      site: "z",
+      region: "WA",
+      collection_id: 4,
+      collection_type: null,
+      animal: null,
+      activity: "Swimming",
+    }),
+  );
+  const channel = new FakeChannel(["none"]);
+  const chooser = createActivityChooser(new Map([[0, channel]]));
+
+  await chooser.chooseActivity(player, new Set());
+
+  const catchIndex = channel.sent.findIndex((m) => m.includes("Your catch card"));
+  const activitiesIndex = channel.sent.findIndex((m) =>
+    m.includes("Available activities:"),
+  );
+  assert.notEqual(catchIndex, -1);
+  assert.notEqual(activitiesIndex, -1);
+  assert.ok(catchIndex < activitiesIndex);
+  assert.ok(channel.sent[catchIndex].includes("Catch Site"));
+});
+
+test("announces the catch card even when no activities are available", async () => {
+  const player = new Player(0);
+  player.draft.push(
+    Card.fromRaw("Catch Site", {
+      site: "z",
+      region: "WA",
+      collection_id: 4,
+      collection_type: null,
+      animal: null,
+      activity: null,
+    }),
+  );
+  const channel = new FakeChannel([]);
+  const chooser = createActivityChooser(new Map([[0, channel]]));
+
+  const chosen = await chooser.chooseActivity(player, new Set());
+
+  assert.equal(chosen, undefined);
+  assert.ok(
+    channel.sent.some(
+      (m) => m.includes("Your catch card") && m.includes("Catch Site"),
+    ),
+  );
+  assert.ok(!channel.sent.some((m) => m.includes("Available activities:")));
+});

@@ -57,6 +57,26 @@ test("HumanAgent retries until a valid letter is given", async () => {
   assert.ok(channel.sent.some((m) => m.includes("not in your hand")));
 });
 
+test("HumanAgent prompts to draft by default", async () => {
+  const hand = [card("A")];
+  const channel = new FakeChannel(["a"]);
+  const agent = new HumanAgent(channel);
+
+  await agent.chooseCard(hand);
+
+  assert.ok(channel.sent.some((m) => m.includes("card to draft")));
+});
+
+test("HumanAgent prompts to throw for the first card", async () => {
+  const hand = [card("A")];
+  const channel = new FakeChannel(["a"]);
+  const agent = new HumanAgent(channel);
+
+  await agent.chooseCard(hand, "throw");
+
+  assert.ok(channel.sent.some((m) => m.includes("card to throw")));
+});
+
 test("RandomBotAgent picks a card from the hand", async () => {
   const hand = [card("A"), card("B"), card("C")];
   const agent = new RandomBotAgent(new SeededRandom(1));

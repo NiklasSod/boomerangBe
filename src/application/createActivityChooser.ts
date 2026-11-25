@@ -37,11 +37,14 @@ export function createActivityChooser(
 ): ActivityChooser {
   return {
     async chooseActivity(player, alreadyScored) {
+      const channel = humanChannels.get(player.id);
+      if (channel !== undefined) {
+        await announceCatchCard(channel, player);
+      }
       const available = availableActivities(player.draft, alreadyScored);
       if (available.length === 0) {
         return undefined;
       }
-      const channel = humanChannels.get(player.id);
       if (channel === undefined) {
         return available[0].name;
       }
@@ -66,4 +69,18 @@ export function createActivityChooser(
       }
     },
   };
+}
+
+async function announceCatchCard(
+  channel: IMessageChannel,
+  player: Player,
+): Promise<void> {
+  const draft = player.draft;
+  if (draft.length === 0) {
+    return;
+  }
+  const catchCard = draft[draft.length - 1];
+  await channel.send(
+    `Your catch card: ${catchCard.name} [${catchCard.siteLetter}] (${catchCard.number})`,
+  );
 }
