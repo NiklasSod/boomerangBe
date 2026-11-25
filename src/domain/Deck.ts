@@ -21,7 +21,7 @@ export class Deck {
     return [...this.pile];
   }
 
-  /** Fisher–Yates shuffle using the injected number source. */
+  /** Fisher-Yates shuffle using the injected number source. */
   shuffle(rng: IRandom): void {
     for (let i = this.pile.length - 1; i > 0; i--) {
       const j = rng.nextInt(i + 1);

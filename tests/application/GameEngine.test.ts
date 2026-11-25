@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GameEngine, determineWinner } from "../../src/application/GameEngine.js";
+import { GameEngine, determineWinner, composeObservers } from "../../src/application/GameEngine.js";
+import type { GameEndContext } from "../../src/application/GameEngine.js";
 import { DraftCoordinator } from "../../src/application/DraftCoordinator.js";
 import { RoundManager } from "../../src/application/RoundManager.js";
 import { createScoreCalculator } from "../../src/rules/createScoreCalculator.js";
@@ -96,4 +97,45 @@ test("play runs four rounds, scores sites, and picks a winner", async () => {
   assert.equal(players[1].finalScore, 28);
   assert.deepEqual(result.totals, new Map([[0, 28], [1, 28]]));
   assert.equal(result.winnerId, 0);
+});
+
+test("composeObservers fans every hook out to each observer", async () => {
+  const eventsA: string[] = [];
+  const eventsB: string[] = [];
+  const composed = composeObservers([
+    {
+      onRoundStart(round) {
+        eventsA.push(`start${round}`);
+      },
+      onRoundEnd(round) {
+        eventsA.push(`end${round}`);
+      },
+      onGameEnd() {
+        eventsA.push("game");
+      },
+    },
+    {
+      onRoundStart(round) {
+        eventsB.push(`start${round}`);
+      },
+      onRoundEnd(round) {
+        eventsB.push(`end${round}`);
+      },
+      onGameEnd() {
+        eventsB.push("game");
+      },
+    },
+  ]);
+
+  const context: GameEndContext = {
+    players: [],
+    result: { winnerId: 0, totals: new Map() },
+    collectedCards: new Map(),
+  };
+  await composed.onRoundStart?.(1);
+  await composed.onRoundEnd?.(1, []);
+  await composed.onGameEnd?.(context);
+
+  assert.deepEqual(eventsA, ["start1", "end1", "game"]);
+  assert.deepEqual(eventsB, ["start1", "end1", "game"]);
 });

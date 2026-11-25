@@ -86,14 +86,14 @@ export async function runLocalGame(
 
   const regions = [...new Set(cards.map((card) => card.region))];
   const scoreCalculator = createScoreCalculator();
+  const notifier = new HumanPickNotifier(humanChannels);
   const roundManager = new RoundManager(
-    new DraftCoordinator({
-      pickObserver: new HumanPickNotifier(humanChannels),
-    }),
+    new DraftCoordinator({ pickObserver: notifier }),
     scoreCalculator,
     new RegionTracker(),
     regions,
     createActivityChooser(humanChannels),
+    notifier,
   );
   const engine = new GameEngine(
     cards,

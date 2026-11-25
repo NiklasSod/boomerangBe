@@ -27,6 +27,23 @@ export interface GameObserver {
   onGameEnd?(context: GameEndContext): Promise<void> | void;
 }
 
+/** Fans one observer slot out to several observers (one per player/channel). */
+export function composeObservers(
+  observers: readonly GameObserver[],
+): GameObserver {
+  return {
+    async onRoundStart(round) {
+      await Promise.all(observers.map((o) => o.onRoundStart?.(round)));
+    },
+    async onRoundEnd(round, reports) {
+      await Promise.all(observers.map((o) => o.onRoundEnd?.(round, reports)));
+    },
+    async onGameEnd(context) {
+      await Promise.all(observers.map((o) => o.onGameEnd?.(context)));
+    },
+  };
+}
+
 const TOTAL_ROUNDS = 4;
 const HAND_SIZE = 7;
 

@@ -51,3 +51,19 @@ test("does not tell a picker to wait when only bots remain", async () => {
 
   assert.deepEqual(channel0.sent, []);
 });
+
+test("notifies the same way when an activity is chosen", async () => {
+  const channel0 = new FakeChannel();
+  const channel1 = new FakeChannel();
+  const notifier = new HumanPickNotifier(
+    new Map([
+      [0, channel0],
+      [1, channel1],
+    ]),
+  );
+
+  await notifier.onActivityChosen(1, [0]);
+
+  assert.deepEqual(channel0.sent, ["Player 1 is waiting for you"]);
+  assert.deepEqual(channel1.sent, ["Waiting for other players"]);
+});

@@ -17,7 +17,7 @@ export async function runClient(
   port: number,
   channel: IMessageChannel = new ConsoleChannel(),
 ): Promise<void> {
-  const socket: Socket = io(`http://${ip}:${port}`);
+  const socket: Socket = io(`http://${ip}:${port}`, { reconnection: false });
 
   socket.on(DISPLAY_EVENT, (message: unknown) => {
     void channel.send(message);
@@ -30,7 +30,10 @@ export async function runClient(
   });
 
   await new Promise<void>((resolve) => {
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason: string) => {
+      if (reason !== "io server disconnect") {
+        void channel.send(`Disconnected from ${ip}:${port} (${reason})`);
+      }
       channel.close();
       resolve();
     });

@@ -13,6 +13,14 @@ export interface ActivityChooser {
   ): Promise<string | undefined>;
 }
 
+/** Notified as each player submits their activity choice. */
+export interface ActivityObserver {
+  onActivityChosen?(
+    playerId: number,
+    waitingPlayerIds: readonly number[],
+  ): Promise<void> | void;
+}
+
 export interface PlayerRoundReport {
   readonly playerId: number;
   readonly total: number;
@@ -35,6 +43,7 @@ export class RoundManager {
     private readonly regionTracker: RegionTracker,
     private readonly regions: readonly string[],
     private readonly activityChooser: ActivityChooser,
+    private readonly activityObserver?: ActivityObserver,
   ) {}
 
   async runRound(
@@ -61,6 +70,7 @@ export class RoundManager {
       regionBonusesByPlayer.set(bonus.playerId, regions);
     }
 
+    const remaining = new Set(players.map((player) => player.id));
     return Promise.all(
       players.map(async (player) => {
         const alreadyScored =
@@ -68,6 +78,11 @@ export class RoundManager {
         const chosenActivity = await this.activityChooser.chooseActivity(
           player,
           alreadyScored,
+        );
+        remaining.delete(player.id);
+        await this.activityObserver?.onActivityChosen?.(
+          player.id,
+          [...remaining],
         );
         const report = this.scoreCalculator.scoreRound({
           cards: player.draft,

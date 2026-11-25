@@ -168,3 +168,56 @@ test("scores the chosen activity and remembers it as used", async () => {
   assert.equal(players[1].roundScores[0], 0);
   assert.equal(seenSets[0].has("Swimming"), true);
 });
+
+test("notifies the activity observer as each player chooses", async () => {
+  const players = playersWith(
+    ["A", "B", "C", "D", "E", "F", "G"].map((l) => makeCard(l)),
+    ["H", "I", "J", "K", "L", "M", "N"].map((l) => makeCard(l)),
+  );
+
+  const events: { playerId: number; waiting: readonly number[] }[] = [];
+  const resolveChoice: (() => void)[] = [];
+  let choiceCalls = 0;
+  let allChoicesStarted: (() => void) | undefined;
+  const choicesStarted = new Promise<void>((resolve) => {
+    allChoicesStarted = resolve;
+  });
+
+  const chooser: ActivityChooser = {
+    chooseActivity(player) {
+      choiceCalls += 1;
+      if (choiceCalls === 2) {
+        allChoicesStarted?.();
+      }
+      return new Promise<string | undefined>((resolve) => {
+        resolveChoice[player.id] = () => resolve(undefined);
+      });
+    },
+  };
+  const manager = new RoundManager(
+    new DraftCoordinator(),
+    createScoreCalculator(),
+    new RegionTracker(),
+    [],
+    chooser,
+    {
+      async onActivityChosen(playerId, waiting) {
+        events.push({ playerId, waiting });
+      },
+    },
+  );
+
+  const run = manager.runRound(players, [firstCardAgent, firstCardAgent], 1);
+  await choicesStarted;
+
+  // Player 1 submits first while player 0 is still deciding.
+  resolveChoice[1]();
+  await Promise.resolve();
+  assert.deepEqual(events[0], { playerId: 1, waiting: [0] });
+
+  resolveChoice[0]();
+  await run;
+
+  assert.equal(events.length, 2);
+  assert.deepEqual(events[1], { playerId: 0, waiting: [] });
+});
