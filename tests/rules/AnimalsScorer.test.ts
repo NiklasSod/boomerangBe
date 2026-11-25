@@ -26,6 +26,7 @@ test("a pair of kangaroos scores 3", () => {
 
   assert.equal(result.name, "Animals");
   assert.equal(result.points, 3);
+  assert.deepEqual(result.breakdown, new Map([["Kangaroos", 1]]));
 });
 
 test("a single animal scores nothing", () => {
@@ -77,4 +78,5 @@ test("scores zero when no animals are present", () => {
   const result = scorer.score(context([card(null), card(null)]));
 
   assert.equal(result.points, 0);
+  assert.equal(result.breakdown, undefined);
 });

@@ -27,9 +27,18 @@ export class AnimalsScorer implements IScoreCategory {
       }
     }
     let points = 0;
+    const pairs = new Map<string, number>();
     for (const [animal, count] of counts) {
-      points += Math.floor(count / 2) * (ANIMAL_VALUES.get(animal) ?? 0);
+      const pairCount = Math.floor(count / 2);
+      if (pairCount > 0) {
+        pairs.set(animal, pairCount);
+        points += pairCount * (ANIMAL_VALUES.get(animal) ?? 0);
+      }
     }
-    return { name: this.name, points };
+    return {
+      name: this.name,
+      points,
+      breakdown: pairs.size > 0 ? pairs : undefined,
+    };
   }
 }

@@ -8,6 +8,7 @@ import { RoundManager } from "./application/RoundManager.js";
 import { GameEngine } from "./application/GameEngine.js";
 import { createScoreCalculator } from "./rules/createScoreCalculator.js";
 import { createActivityChooser } from "./application/createActivityChooser.js";
+import { ConsoleGameReporter } from "./adapters/ConsoleGameReporter.js";
 import { Player } from "./domain/Player.js";
 import { RegionTracker } from "./domain/RegionTracker.js";
 import type { IAgent } from "./domain/ports.js";
@@ -99,12 +100,7 @@ export async function runLocalGame(
     rng,
   );
 
-  const result = await engine.play();
+  await engine.play(new ConsoleGameReporter(channel, 0));
 
-  await channel.send("Final scores:");
-  for (const player of players) {
-    await channel.send(`Player ${player.id}: ${player.totalScore}`);
-  }
-  await channel.send(`Winner: Player ${result.winnerId}`);
   channel.close();
 }

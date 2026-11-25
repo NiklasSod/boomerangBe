@@ -109,6 +109,34 @@ test("awards +3 to every player completing the same region in a round", async ()
   assert.equal(regionTracker.claimed.has("WA"), true);
 });
 
+test("reports the region bonus awarded to each player this round", async () => {
+  const waLetters = new Set(["A", "C", "E", "G", "H", "B", "J", "D"]);
+  const players = playersWith(
+    ["A", "B", "C", "D", "E", "F", "G"].map((l) =>
+      makeCard(l, { region: waLetters.has(l) ? "WA" : "NT" }),
+    ),
+    ["H", "I", "J", "K", "L", "M", "N"].map((l) =>
+      makeCard(l, { region: waLetters.has(l) ? "WA" : "NT" }),
+    ),
+  );
+  const manager = new RoundManager(
+    new DraftCoordinator(),
+    createScoreCalculator(),
+    new RegionTracker(),
+    ["WA"],
+    noActivity,
+  );
+
+  const reports = await manager.runRound(
+    players,
+    [firstCardAgent, firstCardAgent],
+    1,
+  );
+
+  assert.deepEqual(reports[0].regionBonuses, ["WA"]);
+  assert.deepEqual(reports[1].regionBonuses, ["WA"]);
+});
+
 test("scores the chosen activity and remembers it as used", async () => {
   const swimmingLetters = new Set(["A", "I", "C"]);
   const players = playersWith(

@@ -28,6 +28,13 @@ test("doubles a collection total of 7 or less", () => {
 
   assert.equal(result.name, "Collections");
   assert.equal(result.points, 12); // (3*1 + 1*3) = 6, doubled
+  assert.deepEqual(
+    result.breakdown,
+    new Map([
+      ["Leaves", 3],
+      ["Shells", 1],
+    ]),
+  );
 });
 
 test("doubles a total of exactly 7", () => {
@@ -56,4 +63,5 @@ test("scores zero when no collections are present", () => {
   const result = scorer.score(context([card(null), card(null)]));
 
   assert.equal(result.points, 0);
+  assert.equal(result.breakdown, undefined);
 });

@@ -17,6 +17,8 @@ export interface PlayerRoundReport {
   readonly playerId: number;
   readonly total: number;
   readonly results: readonly CategoryResult[];
+  /** Regions completed this round, each worth a +3 bonus. */
+  readonly regionBonuses: readonly string[];
 }
 
 /**
@@ -51,8 +53,12 @@ export class RoundManager {
       this.regions,
       players.map((player) => player.id),
     );
+    const regionBonusesByPlayer = new Map<number, string[]>();
     for (const bonus of bonuses) {
       playerById.get(bonus.playerId)?.awardRegionBonus(bonus.region);
+      const regions = regionBonusesByPlayer.get(bonus.playerId) ?? [];
+      regions.push(bonus.region);
+      regionBonusesByPlayer.set(bonus.playerId, regions);
     }
 
     return Promise.all(
@@ -77,6 +83,7 @@ export class RoundManager {
           playerId: player.id,
           total: report.total,
           results: report.results,
+          regionBonuses: regionBonusesByPlayer.get(player.id) ?? [],
         };
       }),
     );

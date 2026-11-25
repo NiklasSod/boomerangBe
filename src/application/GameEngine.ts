@@ -3,11 +3,28 @@ import type { Card } from "../domain/Card.js";
 import type { Player } from "../domain/Player.js";
 import type { IAgent, IRandom } from "../domain/ports.js";
 import type { ScoreCalculator } from "../domain/ScoreCalculator.js";
-import type { RoundManager } from "./RoundManager.js";
+import type { PlayerRoundReport, RoundManager } from "./RoundManager.js";
 
 export interface GameResult {
   readonly winnerId: number;
   readonly totals: ReadonlyMap<number, number>;
+}
+
+/** Snapshot handed to an observer once the game has finished. */
+export interface GameEndContext {
+  readonly players: readonly Player[];
+  readonly result: GameResult;
+  readonly collectedCards: ReadonlyMap<number, readonly Card[]>;
+}
+
+/** Optional game lifecycle hooks for reporting progress to players. */
+export interface GameObserver {
+  onRoundStart?(round: number): Promise<void> | void;
+  onRoundEnd?(
+    round: number,
+    reports: readonly PlayerRoundReport[],
+  ): Promise<void> | void;
+  onGameEnd?(context: GameEndContext): Promise<void> | void;
 }
 
 const TOTAL_ROUNDS = 4;
@@ -51,10 +68,11 @@ export class GameEngine {
     private readonly random: IRandom,
   ) {}
 
-  async play(): Promise<GameResult> {
+  async play(observer?: GameObserver): Promise<GameResult> {
     const throwAndCatchTotals = new Map<number, number>();
 
     for (let round = 1; round <= TOTAL_ROUNDS; round++) {
+      await observer?.onRoundStart?.(round);
       this.dealRound();
       const reports = await this.roundManager.runRound(
         this.players,
@@ -76,6 +94,8 @@ export class GameEngine {
           (throwAndCatchTotals.get(report.playerId) ?? 0) + throwAndCatch,
         );
       }
+
+      await observer?.onRoundEnd?.(round, reports);
     }
 
     for (const player of this.players) {
@@ -86,7 +106,13 @@ export class GameEngine {
       player.recordFinalScore(report.total);
     }
 
-    return determineWinner(this.players, throwAndCatchTotals);
+    const result = determineWinner(this.players, throwAndCatchTotals);
+    await observer?.onGameEnd?.({
+      players: this.players,
+      result,
+      collectedCards: this.collectedCards,
+    });
+    return result;
   }
 
   private dealRound(): void {

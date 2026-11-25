@@ -12,6 +12,7 @@ import { RoundManager } from "../application/RoundManager.js";
 import { GameEngine } from "../application/GameEngine.js";
 import { createScoreCalculator } from "../rules/createScoreCalculator.js";
 import { createActivityChooser } from "../application/createActivityChooser.js";
+import { ConsoleGameReporter } from "../adapters/ConsoleGameReporter.js";
 import { SocketChannel } from "./SocketChannel.js";
 import type { IAgent, IMessageChannel } from "../domain/ports.js";
 
@@ -105,14 +106,17 @@ export async function startGameServer(
     rng,
   );
 
-  const result = await engine.play();
+  const result = await engine.play(new ConsoleGameReporter(consoleChannel, 0));
 
   const summary = [
     "Final scores:",
     ...players.map((player) => `Player ${player.id}: ${player.totalScore}`),
     `Winner: Player ${result.winnerId}`,
   ].join("\n");
-  for (const channel of humanChannels.values()) {
+  for (const [playerId, channel] of humanChannels) {
+    if (playerId === 0) {
+      continue; // the console host already received a full report
+    }
     await channel.send(summary);
   }
 

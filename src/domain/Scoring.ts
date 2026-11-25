@@ -6,6 +6,8 @@ export interface CategoryResult {
   readonly points: number;
   /** Activity scored this round, if any (used by Activities). */
   readonly scoredActivity?: string;
+  /** Per-item detail for the category, e.g. collection counts or animal pairs. */
+  readonly breakdown?: ReadonlyMap<string, number>;
 }
 
 /**
