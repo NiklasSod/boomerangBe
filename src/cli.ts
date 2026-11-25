@@ -4,21 +4,17 @@ import { HumanAgent } from "./adapters/HumanAgent.js";
 import { RandomBotAgent } from "./adapters/RandomBotAgent.js";
 import { createRandom } from "./adapters/createRandom.js";
 import { DraftCoordinator } from "./application/DraftCoordinator.js";
-import {
-  RoundManager,
-  type ActivityChooser,
-} from "./application/RoundManager.js";
+import { RoundManager } from "./application/RoundManager.js";
 import { GameEngine } from "./application/GameEngine.js";
 import { createScoreCalculator } from "./rules/createScoreCalculator.js";
-import { ACTIVITY_SCORES } from "./rules/ActivitiesScorer.js";
+import { createActivityChooser } from "./application/createActivityChooser.js";
 import { Player } from "./domain/Player.js";
 import { RegionTracker } from "./domain/RegionTracker.js";
-import type { Card } from "./domain/Card.js";
 import type { IAgent } from "./domain/ports.js";
 
 const USAGE = `Usage:
-  npm start -- <numPlayers> <numBots> [seed]   start a game (1 local human + bots)
-  npm start -- <IP>                            connect as a client (arrives in step 20)`;
+  npm start -- <numPlayers> <numBots> [seed]   start a game (local human + bots + remote humans)
+  npm start -- <IP>                            connect as a remote client`;
 
 export type CliArgs =
   | {
@@ -92,7 +88,7 @@ export async function runLocalGame(
     scoreCalculator,
     new RegionTracker(),
     regions,
-    makeActivityChooser(channel),
+    createActivityChooser(new Map([[0, channel]])),
   );
   const engine = new GameEngine(
     cards,
@@ -111,54 +107,4 @@ export async function runLocalGame(
   }
   await channel.send(`Winner: Player ${result.winnerId}`);
   channel.close();
-}
-
-function makeActivityChooser(channel: ConsoleChannel): ActivityChooser {
-  return {
-    async chooseActivity(player, alreadyScored) {
-      const available = availableActivities(player.draft, alreadyScored);
-      if (available.length === 0) {
-        return undefined;
-      }
-      if (player.id !== 0) {
-        return available[0].name;
-      }
-
-      const listing = available
-        .map((a) => `${a.name} (x${a.count}, ${a.points} pts)`)
-        .join(", ");
-      await channel.send(`Available activities: ${listing}`);
-      await channel.send("Type an activity name to score it, or 'none' to skip");
-      for (;;) {
-        const answer = (await channel.read()).trim();
-        if (answer.toLowerCase() === "none") {
-          return undefined;
-        }
-        const match = available.find(
-          (a) => a.name.toLowerCase() === answer.toLowerCase(),
-        );
-        if (match !== undefined) {
-          return match.name;
-        }
-        await channel.send(`"${answer}" is not available. Try again.`);
-      }
-    },
-  };
-}
-
-function availableActivities(
-  draft: readonly Card[],
-  alreadyScored: ReadonlySet<string>,
-): { name: string; count: number; points: number }[] {
-  const counts = new Map<string, number>();
-  for (const card of draft) {
-    if (card.activity !== null && !alreadyScored.has(card.activity)) {
-      counts.set(card.activity, (counts.get(card.activity) ?? 0) + 1);
-    }
-  }
-  return [...counts.entries()].map(([name, count]) => ({
-    name,
-    count,
-    points: ACTIVITY_SCORES[Math.min(count, ACTIVITY_SCORES.length) - 1] ?? 0,
-  }));
 }

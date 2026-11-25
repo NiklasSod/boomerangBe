@@ -33,6 +33,8 @@ class FakeChannel implements IMessageChannel {
   async read(): Promise<string> {
     return this.reads[this.index++];
   }
+
+  close(): void {}
 }
 
 test("HumanAgent returns the card matching the typed letter", async () => {

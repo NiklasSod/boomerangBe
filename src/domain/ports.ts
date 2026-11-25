@@ -19,4 +19,5 @@ export interface IAgent {
 export interface IMessageChannel {
   send(message: unknown): Promise<void>;
   read(): Promise<string>;
+  close(): void;
 }
