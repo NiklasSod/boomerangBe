@@ -23,7 +23,7 @@ npm install
 npm run typecheck   # tsc --noEmit
 npm test            # node --import tsx --test "tests/**/*.test.ts"
 npm run build       # tsc -> dist/
-npm start -- <numPlayers> <numBots> [seed]
+npm start -- <numPlayers> <numBots> [seed] [cardSet]
 npm start -- <IP>
 npm run dev         # tsx watch src/index.ts
 ```
@@ -46,7 +46,20 @@ npm start -- 127.0.0.1
 `numPlayers` is the number of **human** players (including the local one),
 `numBots` is the number of bots, and the total must be 2–4. The optional
 `seed` makes a game reproducible; when omitted the game starts from a random
-seed.
+seed. The optional `cardSet` picks the deck + scoring values (default
+`australia`).
+
+## Card sets
+
+A card set is one config object in [src/cards](src/cards/) — its JSON deck,
+region size, and the collection/animal point values. To add **Boomerang USA**:
+
+1. Add `src/cards/usa/cards.json` (same shape as the Australia file).
+2. Add `src/cards/usa.ts` exporting a `CardSetConfig`.
+3. Register it in the `CARD_SETS` map in [src/cards/cardSets.ts](src/cards/cardSets.ts).
+
+No rule, orchestration, or engine changes are needed — the scorers receive
+the value tables through their constructors.
 
 ## Architecture (hexagonal / ports & adapters)
 
@@ -57,6 +70,7 @@ outside world; adapters and the network layer implement the domain's ports.
 src/
   domain/        pure model + ports (no I/O, no framework code)
   rules/         concrete IScoreCategory implementations
+  cards/         card set configs + JSON decks (australia, usa, ...)
   application/   DraftCoordinator, RoundManager, GameEngine
   adapters/      implementations of the ports
   net/           Socket.IO channel, client, and game server

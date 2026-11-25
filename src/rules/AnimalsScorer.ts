@@ -4,20 +4,15 @@ import type {
   ScoringContext,
 } from "../domain/Scoring.js";
 
-const ANIMAL_VALUES: ReadonlyMap<string, number> = new Map([
-  ["Kangaroos", 3],
-  ["Emus", 4],
-  ["Wombats", 5],
-  ["Koalas", 7],
-  ["Platypuses", 9],
-]);
-
 /**
  * Round rule: scores each matching pair of animals. Three-of-a-kind counts
- * as one pair, four-of-a-kind as two pairs. Unknown animals score nothing.
+ * as one pair, four-of-a-kind as two pairs. Values come from the card set
+ * being played. Unknown animals score nothing.
  */
 export class AnimalsScorer implements IScoreCategory {
   readonly name = "Animals";
+
+  constructor(private readonly animalValues: ReadonlyMap<string, number>) {}
 
   score(ctx: ScoringContext): CategoryResult {
     const counts = new Map<string, number>();
@@ -32,7 +27,7 @@ export class AnimalsScorer implements IScoreCategory {
       const pairCount = Math.floor(count / 2);
       if (pairCount > 0) {
         pairs.set(animal, pairCount);
-        points += pairCount * (ANIMAL_VALUES.get(animal) ?? 0);
+        points += pairCount * (this.animalValues.get(animal) ?? 0);
       }
     }
     return {

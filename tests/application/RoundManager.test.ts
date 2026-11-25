@@ -10,6 +10,12 @@ import { RegionTracker } from "../../src/domain/RegionTracker.js";
 import { Card } from "../../src/domain/Card.js";
 import { Player } from "../../src/domain/Player.js";
 import type { IAgent } from "../../src/domain/ports.js";
+import { australiaConfig } from "../../src/cards/australia.js";
+
+const scoreConfig = {
+  collectionValues: australiaConfig.collectionValues,
+  animalValues: australiaConfig.animalValues,
+};
 
 interface CardOptions {
   number?: number;
@@ -63,7 +69,7 @@ test("drafts, records sites, and records a round score per player", async () => 
   const regionTracker = new RegionTracker();
   const manager = new RoundManager(
     new DraftCoordinator(),
-    createScoreCalculator(),
+    createScoreCalculator(scoreConfig),
     regionTracker,
     [],
     noActivity,
@@ -96,7 +102,7 @@ test("awards +3 to every player completing the same region in a round", async ()
   const regionTracker = new RegionTracker();
   const manager = new RoundManager(
     new DraftCoordinator(),
-    createScoreCalculator(),
+    createScoreCalculator(scoreConfig),
     regionTracker,
     ["WA"],
     noActivity,
@@ -121,7 +127,7 @@ test("reports the region bonus awarded to each player this round", async () => {
   );
   const manager = new RoundManager(
     new DraftCoordinator(),
-    createScoreCalculator(),
+    createScoreCalculator(scoreConfig),
     new RegionTracker(),
     ["WA"],
     noActivity,
@@ -156,7 +162,7 @@ test("scores the chosen activity and remembers it as used", async () => {
   };
   const manager = new RoundManager(
     new DraftCoordinator(),
-    createScoreCalculator(),
+    createScoreCalculator(scoreConfig),
     new RegionTracker(),
     [],
     chooser,
@@ -196,7 +202,7 @@ test("notifies the activity observer as each player chooses", async () => {
   };
   const manager = new RoundManager(
     new DraftCoordinator(),
-    createScoreCalculator(),
+    createScoreCalculator(scoreConfig),
     new RegionTracker(),
     [],
     chooser,

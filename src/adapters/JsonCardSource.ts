@@ -5,7 +5,10 @@ import type { ICardSource } from "../domain/ports.js";
 
 /** Loads cards from a JSON file whose shape matches cards.json. */
 export class JsonCardSource implements ICardSource {
-  constructor(private readonly filePath: string | URL) {}
+  constructor(
+    private readonly filePath: string | URL,
+    private readonly sitesPerRegion = 4,
+  ) {}
 
   async load(): Promise<Card[]> {
     const json = await readFile(this.filePath, "utf8");
@@ -34,8 +37,10 @@ export class JsonCardSource implements ICardSource {
     }
 
     for (const [region, count] of countsByRegion) {
-      if (count !== 4) {
-        throw new Error(`Region "${region}" has ${count} cards; expected 4`);
+      if (count !== this.sitesPerRegion) {
+        throw new Error(
+          `Region "${region}" has ${count} cards; expected ${this.sitesPerRegion}`,
+        );
       }
     }
   }

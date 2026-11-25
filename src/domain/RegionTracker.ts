@@ -15,6 +15,8 @@ export class RegionTracker {
   private readonly sitesByPlayer = new Map<number, Map<string, string>>();
   private readonly claimedRegions = new Set<string>();
 
+  constructor(private readonly sitesPerRegion = 4) {}
+
   /** Records new site letters for a player (duplicate letters ignored). */
   recordSites(playerId: number, cards: readonly Card[]): void {
     let sites = this.sitesByPlayer.get(playerId);
@@ -45,7 +47,7 @@ export class RegionTracker {
         count += 1;
       }
     }
-    return count === 4;
+    return count === this.sitesPerRegion;
   }
 
   /**

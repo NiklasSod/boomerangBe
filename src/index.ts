@@ -18,13 +18,14 @@ async function main(): Promise<void> {
 
   try {
     if (cli.numPlayers === 1) {
-      await runLocalGame(cli.numPlayers, cli.numBots, cli.seed);
+      await runLocalGame(cli.numPlayers, cli.numBots, cli.seed, cli.cardSet);
     } else {
       await startGameServer({
         port: PORT,
         numPlayers: cli.numPlayers,
         numBots: cli.numBots,
         seed: cli.seed,
+        cardSet: cli.cardSet,
       });
     }
   } catch (error) {

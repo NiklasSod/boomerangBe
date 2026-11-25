@@ -4,19 +4,17 @@ import type {
   ScoringContext,
 } from "../domain/Scoring.js";
 
-const COLLECTION_VALUES: ReadonlyMap<string, number> = new Map([
-  ["Leaves", 1],
-  ["Wildflowers", 2],
-  ["Shells", 3],
-  ["Souvenirs", 5],
-]);
-
 /**
  * Round rule: sums the value of every collected item, doubling the total
- * when it is 7 or less. Unknown collection types score nothing.
+ * when it is 7 or less. Values come from the card set being played, so the
+ * same rule works for Australia, Europe, USA, ... Unknown types score nothing.
  */
 export class CollectionsScorer implements IScoreCategory {
   readonly name = "Collections";
+
+  constructor(
+    private readonly collectionValues: ReadonlyMap<string, number>,
+  ) {}
 
   score(ctx: ScoringContext): CategoryResult {
     let total = 0;
@@ -24,7 +22,7 @@ export class CollectionsScorer implements IScoreCategory {
     for (const card of ctx.cards) {
       if (card.collection !== null) {
         counts.set(card.collection, (counts.get(card.collection) ?? 0) + 1);
-        total += COLLECTION_VALUES.get(card.collection) ?? 0;
+        total += this.collectionValues.get(card.collection) ?? 0;
       }
     }
     return {

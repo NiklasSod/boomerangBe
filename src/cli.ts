@@ -1,4 +1,3 @@
-import { JsonCardSource } from "./adapters/JsonCardSource.js";
 import { ConsoleChannel } from "./adapters/ConsoleChannel.js";
 import { HumanAgent } from "./adapters/HumanAgent.js";
 import { RandomBotAgent } from "./adapters/RandomBotAgent.js";
@@ -12,11 +11,12 @@ import { ConsoleGameReporter } from "./adapters/ConsoleGameReporter.js";
 import { HumanPickNotifier } from "./adapters/HumanPickNotifier.js";
 import { Player } from "./domain/Player.js";
 import { RegionTracker } from "./domain/RegionTracker.js";
+import { getCardSet } from "./cards/cardSets.js";
 import type { IAgent, IMessageChannel } from "./domain/ports.js";
 
 const USAGE = `Usage:
-  npm start -- <numPlayers> <numBots> [seed]   start a game (local human + bots + remote humans)
-  npm start -- <IP>                            connect as a remote client`;
+  npm start -- <numPlayers> <numBots> [seed] [cardSet]   start a game
+  npm start -- <IP>                                      connect as a remote client`;
 
 export type CliArgs =
   | {
@@ -24,6 +24,7 @@ export type CliArgs =
       readonly numPlayers: number;
       readonly numBots: number;
       readonly seed?: number;
+      readonly cardSet: string;
     }
   | { readonly mode: "client"; readonly ip: string }
   | { readonly mode: "help"; readonly message: string };
@@ -33,10 +34,11 @@ export function parseCliArgs(args: readonly string[]): CliArgs {
   if (args.length === 1) {
     return { mode: "client", ip: args[0] };
   }
-  if (args.length === 2 || args.length === 3) {
+  if (args.length >= 2 && args.length <= 4) {
     const numPlayers = Number(args[0]);
     const numBots = Number(args[1]);
     const seed = args[2] === undefined ? undefined : Number(args[2]);
+    const cardSet = args[3] ?? "australia";
     const total = numPlayers + numBots;
     if (
       Number.isInteger(numPlayers) &&
@@ -47,7 +49,7 @@ export function parseCliArgs(args: readonly string[]): CliArgs {
       total >= 2 &&
       total <= 4
     ) {
-      return { mode: "server", numPlayers, numBots, seed };
+      return { mode: "server", numPlayers, numBots, seed, cardSet };
     }
     return { mode: "help", message: `Invalid server arguments. ${USAGE}` };
   }
@@ -62,6 +64,7 @@ export async function runLocalGame(
   numPlayers: number,
   numBots: number,
   seed?: number,
+  cardSetName = "australia",
 ): Promise<void> {
   if (numPlayers !== 1) {
     throw new Error(
@@ -69,9 +72,8 @@ export async function runLocalGame(
     );
   }
 
-  const cards = await new JsonCardSource(
-    new URL("./cards/australia/cards.json", import.meta.url),
-  ).load();
+  const config = getCardSet(cardSetName);
+  const cards = await config.cardSource.load();
 
   const channel = new ConsoleChannel();
   const humanChannels = new Map<number, IMessageChannel>([[0, channel]]);
@@ -85,12 +87,15 @@ export async function runLocalGame(
   }
 
   const regions = [...new Set(cards.map((card) => card.region))];
-  const scoreCalculator = createScoreCalculator();
+  const scoreCalculator = createScoreCalculator({
+    collectionValues: config.collectionValues,
+    animalValues: config.animalValues,
+  });
   const notifier = new HumanPickNotifier(humanChannels);
   const roundManager = new RoundManager(
     new DraftCoordinator({ pickObserver: notifier }),
     scoreCalculator,
-    new RegionTracker(),
+    new RegionTracker(config.sitesPerRegion),
     regions,
     createActivityChooser(humanChannels),
     notifier,

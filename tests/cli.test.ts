@@ -15,12 +15,21 @@ test("parses server arguments with and without a seed", () => {
     numPlayers: 2,
     numBots: 1,
     seed: undefined,
+    cardSet: "australia",
   });
   assert.deepEqual(parseCliArgs(["2", "1", "42"]), {
     mode: "server",
     numPlayers: 2,
     numBots: 1,
     seed: 42,
+    cardSet: "australia",
+  });
+  assert.deepEqual(parseCliArgs(["2", "1", "42", "usa"]), {
+    mode: "server",
+    numPlayers: 2,
+    numBots: 1,
+    seed: 42,
+    cardSet: "usa",
   });
 });
 

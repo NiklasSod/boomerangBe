@@ -2,6 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createScoreCalculator } from "../../src/rules/createScoreCalculator.js";
 import { Card } from "../../src/domain/Card.js";
+import { australiaConfig } from "../../src/cards/australia.js";
+
+const scoreConfig = {
+  collectionValues: australiaConfig.collectionValues,
+  animalValues: australiaConfig.animalValues,
+};
 
 interface DraftCard {
   letter: string;
@@ -42,7 +48,7 @@ const draft = [
 ];
 
 test("scores a fixed round draft through every round rule", () => {
-  const calc = createScoreCalculator();
+  const calc = createScoreCalculator(scoreConfig);
 
   const report = calc.scoreRound({
     cards: draft,
@@ -63,7 +69,7 @@ test("scores a fixed round draft through every round rule", () => {
 });
 
 test("scores the final site rule from the same fixed draft", () => {
-  const calc = createScoreCalculator();
+  const calc = createScoreCalculator(scoreConfig);
 
   const report = calc.scoreFinal({
     cards: draft,
@@ -74,4 +80,30 @@ test("scores the final site rule from the same fixed draft", () => {
     ["Sites", 7],
   ]);
   assert.equal(report.total, 7);
+});
+
+test("wires a custom card set's values into the rules", () => {
+  const calc = createScoreCalculator({
+    collectionValues: new Map([["Leaves", 6]]),
+    animalValues: new Map([["Kangaroos", 11]]),
+  });
+
+  const report = calc.scoreRound({
+    cards: [
+      card({ letter: "A", number: 1, collection: "Leaves" }),
+      card({ letter: "B", number: 1, animal: "Kangaroos" }),
+      card({ letter: "C", number: 1, animal: "Kangaroos" }),
+    ],
+    activitiesAlreadyScored: new Set(),
+  });
+
+  assert.deepEqual(
+    report.results.map((r) => [r.name, r.points]),
+    [
+      ["Throw and Catch", 0],
+      ["Collections", 12], // one leaf = 6, doubled
+      ["Animals", 11], // one kangaroo pair at the custom value
+      ["Activities", 0],
+    ],
+  );
 });

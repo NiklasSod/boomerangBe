@@ -1,6 +1,5 @@
 import type { Socket } from "socket.io";
 import { createServer } from "../server.js";
-import { JsonCardSource } from "../adapters/JsonCardSource.js";
 import { ConsoleChannel } from "../adapters/ConsoleChannel.js";
 import { HumanAgent } from "../adapters/HumanAgent.js";
 import { RandomBotAgent } from "../adapters/RandomBotAgent.js";
@@ -15,6 +14,7 @@ import { createActivityChooser } from "../application/createActivityChooser.js";
 import { ConsoleGameReporter } from "../adapters/ConsoleGameReporter.js";
 import { HumanPickNotifier } from "../adapters/HumanPickNotifier.js";
 import { SocketChannel } from "./SocketChannel.js";
+import { getCardSet } from "../cards/cardSets.js";
 import type { IAgent, IMessageChannel } from "../domain/ports.js";
 
 export interface GameServerOptions {
@@ -22,6 +22,7 @@ export interface GameServerOptions {
   readonly numPlayers: number;
   readonly numBots: number;
   readonly seed?: number;
+  readonly cardSet?: string;
 }
 
 /**
@@ -31,12 +32,11 @@ export interface GameServerOptions {
 export async function startGameServer(
   options: GameServerOptions,
 ): Promise<void> {
-  const { port, numPlayers, numBots, seed } = options;
+  const { port, numPlayers, numBots, seed, cardSet: cardSetName } = options;
   const remoteHumans = numPlayers - 1;
 
-  const cards = await new JsonCardSource(
-    new URL("../cards/australia/cards.json", import.meta.url),
-  ).load();
+  const config = getCardSet(cardSetName ?? "australia");
+  const cards = await config.cardSource.load();
   const regions = [...new Set(cards.map((card) => card.region))];
 
   const { httpServer, io } = createServer();
@@ -90,12 +90,15 @@ export async function startGameServer(
     agents.push(new RandomBotAgent(rng));
   }
 
-  const scoreCalculator = createScoreCalculator();
+  const scoreCalculator = createScoreCalculator({
+    collectionValues: config.collectionValues,
+    animalValues: config.animalValues,
+  });
   const notifier = new HumanPickNotifier(humanChannels);
   const roundManager = new RoundManager(
     new DraftCoordinator({ pickObserver: notifier }),
     scoreCalculator,
-    new RegionTracker(),
+    new RegionTracker(config.sitesPerRegion),
     regions,
     createActivityChooser(humanChannels),
     notifier,

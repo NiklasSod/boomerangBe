@@ -9,6 +9,12 @@ import { Card } from "../../src/domain/Card.js";
 import { Player } from "../../src/domain/Player.js";
 import { RegionTracker } from "../../src/domain/RegionTracker.js";
 import type { IAgent, IRandom } from "../../src/domain/ports.js";
+import { australiaConfig } from "../../src/cards/australia.js";
+
+const scoreConfig = {
+  collectionValues: australiaConfig.collectionValues,
+  animalValues: australiaConfig.animalValues,
+};
 
 const firstCardAgent: IAgent = {
   async chooseCard(hand: Card[]): Promise<Card> {
@@ -72,7 +78,7 @@ test("play runs four rounds, scores sites, and picks a winner", async () => {
   const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "*", "-"];
   const cards = letters.map(makeCard);
   const players = [new Player(0), new Player(1)];
-  const scoreCalculator = createScoreCalculator();
+  const scoreCalculator = createScoreCalculator(scoreConfig);
   const roundManager = new RoundManager(
     new DraftCoordinator(),
     scoreCalculator,
