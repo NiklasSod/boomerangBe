@@ -5,7 +5,7 @@ import type {
 } from "../domain/Scoring.js";
 
 /** Points for 1..6 activity cards, indexed by count - 1. */
-const ACTIVITY_SCORES: readonly number[] = [0, 2, 4, 7, 10, 15];
+export const ACTIVITY_SCORES: readonly number[] = [0, 2, 4, 7, 10, 15];
 
 /**
  * Round rule: scores the single activity the player chose this round.
