@@ -13,6 +13,7 @@ import { GameEngine } from "../application/GameEngine.js";
 import { createScoreCalculator } from "../rules/createScoreCalculator.js";
 import { createActivityChooser } from "../application/createActivityChooser.js";
 import { ConsoleGameReporter } from "../adapters/ConsoleGameReporter.js";
+import { HumanPickNotifier } from "../adapters/HumanPickNotifier.js";
 import { SocketChannel } from "./SocketChannel.js";
 import type { IAgent, IMessageChannel } from "../domain/ports.js";
 
@@ -91,7 +92,9 @@ export async function startGameServer(
 
   const scoreCalculator = createScoreCalculator();
   const roundManager = new RoundManager(
-    new DraftCoordinator(),
+    new DraftCoordinator({
+      pickObserver: new HumanPickNotifier(humanChannels),
+    }),
     scoreCalculator,
     new RegionTracker(),
     regions,

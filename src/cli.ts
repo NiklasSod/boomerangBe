@@ -9,9 +9,10 @@ import { GameEngine } from "./application/GameEngine.js";
 import { createScoreCalculator } from "./rules/createScoreCalculator.js";
 import { createActivityChooser } from "./application/createActivityChooser.js";
 import { ConsoleGameReporter } from "./adapters/ConsoleGameReporter.js";
+import { HumanPickNotifier } from "./adapters/HumanPickNotifier.js";
 import { Player } from "./domain/Player.js";
 import { RegionTracker } from "./domain/RegionTracker.js";
-import type { IAgent } from "./domain/ports.js";
+import type { IAgent, IMessageChannel } from "./domain/ports.js";
 
 const USAGE = `Usage:
   npm start -- <numPlayers> <numBots> [seed]   start a game (local human + bots + remote humans)
@@ -73,6 +74,7 @@ export async function runLocalGame(
   ).load();
 
   const channel = new ConsoleChannel();
+  const humanChannels = new Map<number, IMessageChannel>([[0, channel]]);
   const rng = createRandom(seed);
 
   const players = [new Player(0)];
@@ -85,11 +87,13 @@ export async function runLocalGame(
   const regions = [...new Set(cards.map((card) => card.region))];
   const scoreCalculator = createScoreCalculator();
   const roundManager = new RoundManager(
-    new DraftCoordinator(),
+    new DraftCoordinator({
+      pickObserver: new HumanPickNotifier(humanChannels),
+    }),
     scoreCalculator,
     new RegionTracker(),
     regions,
-    createActivityChooser(new Map([[0, channel]])),
+    createActivityChooser(humanChannels),
   );
   const engine = new GameEngine(
     cards,

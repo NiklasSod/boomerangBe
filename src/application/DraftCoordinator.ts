@@ -1,8 +1,16 @@
 import type { Card } from "../domain/Card.js";
 import type { Player } from "../domain/Player.js";
-import type { IAgent } from "../domain/ports.js";
+import type { CardPickPurpose, IAgent } from "../domain/ports.js";
 
 export type PassDirection = "clockwise" | "anticlockwise";
+
+/** Notified as each player submits a pick, before the round advances. */
+export interface PickObserver {
+  onPlayerPicked?(
+    playerId: number,
+    waitingPlayerIds: readonly number[],
+  ): Promise<void> | void;
+}
 
 export interface DraftCoordinatorOptions {
   /** Base pass direction for the picks. `true` = clockwise (left). */
@@ -11,6 +19,8 @@ export interface DraftCoordinatorOptions {
   alternateEachRound?: boolean;
   /** Send the catch card opposite to the round's pass direction. */
   catchOppositeDirection?: boolean;
+  /** Observes pick submissions, e.g. to show "waiting" hints to humans. */
+  pickObserver?: PickObserver;
 }
 
 const PLAYER_MIN = 2;
@@ -27,11 +37,13 @@ export class DraftCoordinator {
   private readonly clockwise: boolean;
   private readonly alternateEachRound: boolean;
   private readonly catchOppositeDirection: boolean;
+  private readonly pickObserver?: PickObserver;
 
   constructor(options: DraftCoordinatorOptions = {}) {
     this.clockwise = options.clockwise ?? true;
     this.alternateEachRound = options.alternateEachRound ?? false;
     this.catchOppositeDirection = options.catchOppositeDirection ?? true;
+    this.pickObserver = options.pickObserver;
   }
 
   async runRound(
@@ -45,9 +57,7 @@ export class DraftCoordinator {
     const catchDirection = this.catchPassDirection(passDirection);
 
     // Each player picks a hidden Throw card from their own 7-card hand.
-    const throwChoices = await Promise.all(
-      players.map((player, i) => agents[i].chooseCard(player.hand, "throw")),
-    );
+    const throwChoices = await this.pick(players, agents, "throw");
     for (let i = 0; i < players.length; i++) {
       players[i].moveToDraft(throwChoices[i]);
     }
@@ -55,9 +65,7 @@ export class DraftCoordinator {
     // Five picks: pass the remaining hand, then everyone picks one card.
     for (let pick = 0; pick < PICKS_WITH_CHOICE; pick++) {
       this.passHands(players, passDirection);
-      const choices = await Promise.all(
-        players.map((player, i) => agents[i].chooseCard(player.hand, "draft")),
-      );
+      const choices = await this.pick(players, agents, "draft");
       for (let i = 0; i < players.length; i++) {
         players[i].moveToDraft(choices[i]);
       }
@@ -84,6 +92,22 @@ export class DraftCoordinator {
         );
       }
     }
+  }
+
+  private async pick(
+    players: readonly Player[],
+    agents: readonly IAgent[],
+    purpose: CardPickPurpose,
+  ): Promise<Card[]> {
+    const remaining = new Set(players.map((player) => player.id));
+    return Promise.all(
+      players.map(async (player, i) => {
+        const card = await agents[i].chooseCard(player.hand, purpose);
+        remaining.delete(player.id);
+        await this.pickObserver?.onPlayerPicked?.(player.id, [...remaining]);
+        return card;
+      }),
+    );
   }
 
   private roundPassDirection(roundNumber: number): PassDirection {

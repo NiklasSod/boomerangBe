@@ -182,3 +182,44 @@ test("labels the first pick as the throw card", async () => {
     "draft",
   ]);
 });
+
+test("notifies the pick observer as each player submits a pick", async () => {
+  const events: { playerId: number; waiting: readonly number[] }[] = [];
+  const coordinator = new DraftCoordinator({
+    pickObserver: {
+      async onPlayerPicked(playerId, waiting) {
+        events.push({ playerId, waiting });
+      },
+    },
+  });
+
+  let resolveFirst: (() => void) | undefined;
+  let first = true;
+  const slowAgent: IAgent = {
+    async chooseCard(hand: Card[]): Promise<Card> {
+      if (first) {
+        first = false;
+        return new Promise<Card>((resolve) => {
+          resolveFirst = () => resolve(hand[0]);
+        });
+      }
+      return hand[0];
+    },
+  };
+  const players = makePlayers([
+    ["A", "B", "C", "D", "E", "F", "G"],
+    ["H", "I", "J", "K", "L", "M", "N"],
+  ]);
+
+  const run = coordinator.runRound(players, [slowAgent, firstCardAgent], 1);
+
+  // Player 1 submits first while player 0 is still deciding.
+  await Promise.resolve();
+  assert.deepEqual(events[0], { playerId: 1, waiting: [0] });
+
+  resolveFirst?.();
+  await run;
+
+  assert.equal(events.length, 12);
+  assert.deepEqual(events[1], { playerId: 0, waiting: [] });
+});
