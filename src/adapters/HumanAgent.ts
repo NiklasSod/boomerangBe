@@ -34,8 +34,12 @@ export class HumanAgent implements IAgent {
 
   private formatHand(hand: Card[]): string {
     const cards = hand
-      .map((c) => `${c.name} [${c.siteLetter}] (${c.number})`)
-      .join(" --- ");
+      .map((c) => {
+        const animalPart = c.animal != null ? ` Animal: ${c.animal}` : "";
+        const collectionPart = c.collection != null ? `, Collection: ${c.collection}` : "";
+        return ` [${c.siteLetter}] (${c.number}) ${c.name}${animalPart}${collectionPart}`
+      })
+      .join("\n");
     return `Your hand:\n${cards}`;
   }
 }
