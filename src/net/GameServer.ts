@@ -1,0 +1,127 @@
+import type { Socket } from "socket.io";
+import { createServer } from "../server.js";
+import { ConsoleChannel } from "../adapters/ConsoleChannel.js";
+import { HumanAgent } from "../adapters/HumanAgent.js";
+import { RandomBotAgent } from "../adapters/RandomBotAgent.js";
+import { createRandom } from "../adapters/createRandom.js";
+import { Player } from "../domain/Player.js";
+import { RegionTracker } from "../domain/RegionTracker.js";
+import { DraftCoordinator } from "../application/DraftCoordinator.js";
+import { RoundManager } from "../application/RoundManager.js";
+import { GameEngine, composeObservers } from "../application/GameEngine.js";
+import { createScoreCalculator } from "../rules/createScoreCalculator.js";
+import { createActivityChooser } from "../application/createActivityChooser.js";
+import { ConsoleGameReporter } from "../adapters/ConsoleGameReporter.js";
+import { HumanPickNotifier } from "../adapters/HumanPickNotifier.js";
+import { SocketChannel } from "./SocketChannel.js";
+import { getCardSet } from "../cards/cardSets.js";
+import type { IAgent, IMessageChannel } from "../domain/ports.js";
+
+export interface GameServerOptions {
+  readonly port: number;
+  readonly numPlayers: number;
+  readonly numBots: number;
+  readonly seed?: number;
+  readonly cardSet?: string;
+}
+
+/**
+ * Hosts a game: one local human on the console, remote humans over
+ * Socket.IO, and random bots filling the remaining seats.
+ */
+export async function startGameServer(
+  options: GameServerOptions,
+): Promise<void> {
+  const { port, numPlayers, numBots, seed, cardSet: cardSetName } = options;
+  const remoteHumans = numPlayers - 1;
+
+  const config = getCardSet(cardSetName ?? "australia");
+  const cards = await config.cardSource.load();
+  const regions = [...new Set(cards.map((card) => card.region))];
+
+  const { httpServer, io } = createServer();
+
+  const humanChannels = new Map<number, IMessageChannel>();
+  const consoleChannel = new ConsoleChannel();
+  humanChannels.set(0, consoleChannel);
+
+  const remoteSockets: Socket[] = [];
+  const allConnected = new Promise<void>((resolve) => {
+    if (remoteHumans === 0) {
+      resolve();
+      return;
+    }
+    io.on("connection", (socket) => {
+      remoteSockets.push(socket);
+      console.log(
+        `[server] remote player ${remoteSockets.length}/${remoteHumans} connected`,
+      );
+      if (remoteSockets.length >= remoteHumans) {
+        resolve();
+      }
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    httpServer.listen(port, () => {
+      console.log(
+        `[server] listening on http://localhost:${port} — waiting for ${remoteHumans} remote player(s)`,
+      );
+      resolve();
+    });
+  });
+
+  await allConnected;
+
+  const players = [new Player(0)];
+  const agents: IAgent[] = [new HumanAgent(consoleChannel)];
+  for (let i = 0; i < remoteHumans; i++) {
+    const playerId = i + 1;
+    const channel = new SocketChannel(remoteSockets[i]);
+    humanChannels.set(playerId, channel);
+    players.push(new Player(playerId));
+    agents.push(new HumanAgent(channel));
+  }
+
+  const rng = createRandom(seed);
+  for (let i = 0; i < numBots; i++) {
+    const playerId = numPlayers + i;
+    players.push(new Player(playerId));
+    agents.push(new RandomBotAgent(rng));
+  }
+
+  const scoreCalculator = createScoreCalculator({
+    collectionValues: config.collectionValues,
+    animalValues: config.animalValues,
+  });
+  const notifier = new HumanPickNotifier(humanChannels);
+  const roundManager = new RoundManager(
+    new DraftCoordinator({ pickObserver: notifier }),
+    scoreCalculator,
+    new RegionTracker(config.sitesPerRegion),
+    regions,
+    createActivityChooser(humanChannels),
+    notifier,
+  );
+  const engine = new GameEngine(
+    cards,
+    players,
+    agents,
+    roundManager,
+    scoreCalculator,
+    rng,
+  );
+
+  const reporters = [...humanChannels.entries()].map(
+    ([playerId, channel]) => new ConsoleGameReporter(channel, playerId),
+  );
+  await engine.play(composeObservers(reporters));
+
+  for (const socket of remoteSockets) {
+    socket.disconnect();
+  }
+  await new Promise<void>((resolve) => {
+    io.close(() => resolve());
+  });
+  consoleChannel.close();
+}
